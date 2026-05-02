@@ -102,6 +102,17 @@ services:
     networks:
       - weather_net
 
+  # 8. Frontend Web App (React / Vite)
+  frontend:
+    build: ./frontend
+    container_name: weather_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - weather_net
+
 networks:
   weather_net:
     driver: bridge
