@@ -1,9 +1,146 @@
-version: '3.8'
-
 services:
-  # Placeholder for Kafka, Spark, Postgres, Dagster, ElysiaJS, React
-  # Services will be added in Phase 2
+  # 1. PostgreSQL (Data Warehouse)
+  postgres:
+    image: postgres:15
+    container_name: weather_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: weather_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - weather_net
+
+  # 2. Zookeeper (Required for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: weather_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - weather_net
+
+  # 3. Apache Kafka (Streaming Buffer)
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: weather_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - weather_net
+
+  # 4. Apache Spark Master Node
+  spark-master:
+    image: bde2020/spark-master:3.2.1-hadoop3.2
+    container_name: weather_spark_master
+    ports:
+      - "8080:8080" # Spark Web UI
+      - "7077:7077" # Spark Master port
+    networks:
+      - weather_net
+
+  # 5. Apache Spark Worker Node
+  spark-worker:
+    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    container_name: weather_spark_worker
+    environment:
+      - "SPARK_MASTER=spark://spark-master:7077"
+    ports:
+      - "8081:8081" # Worker Web UI
+    depends_on:
+      - spark-master
+    networks:
+      - weather_net
+
+  # 6. Dagster (Orchestration)
+  dagster:
+    image: python:3.10-slim
+    container_name: weather_dagster
+    volumes:
+      - ./:/opt/dagster
+    working_dir: /opt/dagster/orchestration
+    env_file:
+      - .env
+    command: bash -c "pip install -r requirements.txt && dagster dev -w workspace.yaml -h 0.0.0.0 -p 3000"
+    ports:
+      - "3000:3000" # Dagster UI
+    environment:
+      - DAGSTER_HOME=/opt/dagster/orchestration
+      - KAFKA_BROKER=kafka:9092
+    networks:
+      - weather_net
+    depends_on:
+      - postgres
+
+  # 7. Backend API (ElysiaJS / Bun)
+  backend:
+    build: ./backend
+    container_name: weather_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=admin
+      - DB_PASSWORD=admin_password
+      - DB_NAME=weather_db
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    networks:
+      - weather_net
+
+  # 9. Spark Submit (Triggers the streaming job)
+  spark-submit:
+    image: bde2020/spark-submit:3.2.1-hadoop3.2
+    container_name: weather_spark_submit
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_APPLICATION_PYTHON_LOCATION=/opt/spark-data/processing/spark_job.py
+      - SPARK_SUBMIT_ARGS=--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1,org.postgresql:postgresql:42.5.4
+      - DB_JDBC_URL=jdbc:postgresql://postgres:5432/weather_db
+      - DB_USER=admin
+      - DB_PASSWORD=admin_password
+      - KAFKA_BROKER=kafka:9092
+    volumes:
+      - ./:/opt/spark-data
+    depends_on:
+      - spark-master
+      - spark-worker
+      - postgres
+      - kafka
+    networks:
+      - weather_net
+
+  # 8. Frontend Web App (React / Vite)
+  frontend:
+    build: ./frontend
+    container_name: weather_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - weather_net
 
 networks:
   weather_net:
     driver: bridge
+
+volumes:
+  postgres_data:

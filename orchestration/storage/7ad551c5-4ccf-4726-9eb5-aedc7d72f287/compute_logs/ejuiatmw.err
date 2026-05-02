@@ -1,0 +1,12 @@
+2026-05-02 14:02:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - LOGS_CAPTURED - Capturing logs for process (pid: 33076).
+2026-05-02 14:02:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - raw_weather_kafka_stream - STEP_START - Started execution of step "raw_weather_kafka_stream".
+2026-05-02 14:02:35 +0000 - dagster - INFO - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - raw_weather_kafka_stream - Triggering the Kafka producer script...
+2026-05-02 14:07:35 +0000 - dagster - INFO - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - raw_weather_kafka_stream - Producer output: Starting Weather Data Producer (Batch run)...
+Message delivery failed: KafkaError{code=_MSG_TIMED_OUT,val=-192,str="Local: Message timed out"}
+Producer finished.
+
+2026-05-02 14:07:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - raw_weather_kafka_stream - STEP_OUTPUT - Yielded output "result" of type "Any". (Type check passed).
+2026-05-02 14:07:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - raw_weather_kafka_stream - Writing file at: /opt/dagster/orchestration/storage/raw_weather_kafka_stream using PickledObjectFilesystemIOManager...
+2026-05-02 14:07:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - raw_weather_kafka_stream - ASSET_MATERIALIZATION - Materialized value raw_weather_kafka_stream.
+2026-05-02 14:07:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - raw_weather_kafka_stream - HANDLED_OUTPUT - Handled output "result" using IO manager "io_manager"
+2026-05-02 14:07:35 +0000 - dagster - DEBUG - __ASSET_JOB - 7ad551c5-4ccf-4726-9eb5-aedc7d72f287 - 33076 - raw_weather_kafka_stream - STEP_SUCCESS - Finished execution of step "raw_weather_kafka_stream" in 5m0s.
