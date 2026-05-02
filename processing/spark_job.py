@@ -4,12 +4,12 @@ from pyspark.sql.functions import from_json, col, current_timestamp
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType, ArrayType
 
 # PostgreSQL Configuration
-POSTGRES_URL = "jdbc:postgresql://localhost:5432/weather_db"
-POSTGRES_USER = "admin"
-POSTGRES_PASSWORD = "admin_password"
+POSTGRES_URL = os.getenv("DB_JDBC_URL", "jdbc:postgresql://localhost:5432/weather_db")
+POSTGRES_USER = os.getenv("DB_USER", "admin")
+POSTGRES_PASSWORD = os.getenv("DB_PASSWORD", "admin_password")
 
 # Kafka Configuration
-KAFKA_BROKER = "localhost:29092"
+KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:29092")
 TOPIC_NAME = "weather_raw"
 
 def create_spark_session():
