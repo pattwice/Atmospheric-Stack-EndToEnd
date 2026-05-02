@@ -44,26 +44,23 @@ def main():
     conf = {'bootstrap.servers': KAFKA_BROKER}
     producer = Producer(conf)
 
-    print("Starting Weather Data Producer...")
+    print("Starting Weather Data Producer (Batch run)...")
     
-    # In a real pipeline, Dagster would run this script once per schedule.
-    # For standalone testing, we run a continuous loop.
-    while True:
-        data = fetch_weather_data()
+    # In a Dagster orchestrated pipeline, we run this once per schedule (e.g., every 5 mins)
+    # instead of an infinite loop.
+    data = fetch_weather_data()
+    
+    if data:
+        # Convert JSON dict to string
+        message = json.dumps(data)
         
-        if data:
-            # Convert JSON dict to string
-            message = json.dumps(data)
-            
-            # Produce the message to the Kafka topic
-            # We encode the string to bytes, as Kafka only handles raw bytes
-            producer.produce(TOPIC_NAME, message.encode('utf-8'), callback=delivery_report)
-            
-            # Poll handles events (like the delivery report callback)
-            producer.poll(0)
-            
-        # Avoid hitting API rate limits
-        time.sleep(30)
+        # Produce the message to the Kafka topic
+        producer.produce(TOPIC_NAME, message.encode('utf-8'), callback=delivery_report)
+        producer.poll(0)
+        
+    # Flush ensures all messages are sent before the script exits
+    producer.flush()
+    print("Producer finished.")
 
 if __name__ == "__main__":
     main()
