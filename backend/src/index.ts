@@ -18,22 +18,50 @@ const app = new Elysia()
     set.headers['Access-Control-Allow-Origin'] = '*'
   })
   .get('/', () => 'Weather ELT Backend is running!')
-  .get('/api/weather', async () => {
+  .get('/api/weather/latest', async () => {
     try {
-      // Query the table created by our Spark streaming job
-      // We fetch the most recent data
-      const result = await pool.query('SELECT * FROM weather_analytics ORDER BY ingested_at DESC LIMIT 50');
-      
-      return {
-        success: true,
-        data: result.rows
-      };
+      const result = await pool.query(`
+        SELECT DISTINCT ON (city) * 
+        FROM weather_analytics 
+        ORDER BY city, ingested_at DESC
+      `);
+      return { success: true, data: result.rows };
     } catch (error) {
       console.error('Database query error:', error);
-      return {
-        success: false,
-        error: 'Failed to fetch weather data from PostgreSQL. Have you started the Spark job yet?'
-      };
+      return { success: false, error: 'Failed to fetch latest weather data.' };
+    }
+  })
+  .get('/api/weather/history', async ({ query }) => {
+    try {
+      const city = query.city as string | undefined;
+      let sql = 'SELECT * FROM weather_analytics ORDER BY ingested_at DESC LIMIT 200';
+      let values: any[] = [];
+      
+      if (city && city.trim() !== '') {
+        sql = 'SELECT * FROM weather_analytics WHERE city ILIKE $1 ORDER BY ingested_at DESC LIMIT 200';
+        values = [`%${city.trim()}%`];
+      }
+      
+      const result = await pool.query(sql, values);
+      return { success: true, data: result.rows };
+    } catch (error) {
+      console.error('Database query error:', error);
+      return { success: false, error: 'Failed to fetch historical data.' };
+    }
+  })
+  .get('/api/weather/insights', async () => {
+    try {
+      // Get highest temp recorded per city
+      const result = await pool.query(`
+        SELECT city, MAX(temperature) as max_temp, MIN(temperature) as min_temp, AVG(humidity) as avg_humidity
+        FROM weather_analytics 
+        GROUP BY city
+        ORDER BY max_temp DESC
+      `);
+      return { success: true, data: result.rows };
+    } catch (error) {
+      console.error('Database query error:', error);
+      return { success: false, error: 'Failed to fetch insights.' };
     }
   })
   .listen(8000);

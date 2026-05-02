@@ -14,8 +14,8 @@ load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 if not API_KEY or API_KEY == "your_real_key_here":
     raise ValueError("OPENWEATHER_API_KEY is missing or invalid in .env")
-CITY = "London" 
-URL = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}"
+
+CITIES = ['Bangkok', 'London', 'New York', 'Tokyo', 'Dubai', 'Reykjavik', 'Sydney', 'Sao Paulo']
 
 # Kafka Configuration
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:29092")
@@ -32,14 +32,15 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-def fetch_weather_data():
+def fetch_weather_data(city):
     """Fetches real-time weather data from the OpenWeatherMap API."""
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}"
     try:
-        response = requests.get(URL)
+        response = requests.get(url)
         response.raise_for_status() # Raises an exception for HTTP errors
         return response.json()
     except Exception as e:
-        print(f"Error fetching data: {e}")
+        print(f"Error fetching data for {city}: {e}")
         return None
 
 def main():
@@ -52,17 +53,17 @@ def main():
 
     print("Starting Weather Data Producer (Batch run)...")
     
-    # In a Dagster orchestrated pipeline, we run this once per schedule (e.g., every 5 mins)
-    # instead of an infinite loop.
-    data = fetch_weather_data()
-    
-    if data:
-        # Convert JSON dict to string
-        message = json.dumps(data)
+    # In a Dagster orchestrated pipeline, we run this once per schedule
+    for city in CITIES:
+        data = fetch_weather_data(city)
         
-        # Produce the message to the Kafka topic
-        producer.produce(TOPIC_NAME, message.encode('utf-8'), callback=delivery_report)
-        producer.poll(0)
+        if data:
+            # Convert JSON dict to string
+            message = json.dumps(data)
+            
+            # Produce the message to the Kafka topic
+            producer.produce(TOPIC_NAME, message.encode('utf-8'), callback=delivery_report)
+            producer.poll(0)
         
     # Flush ensures all messages are sent before the script exits
     # It returns the number of messages still in queue

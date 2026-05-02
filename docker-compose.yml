@@ -94,6 +94,9 @@ services:
     container_name: weather_backend
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
     environment:
       - DB_HOST=postgres
       - DB_USER=admin
@@ -133,6 +136,9 @@ services:
     container_name: weather_frontend
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
     depends_on:
       - backend
     networks:

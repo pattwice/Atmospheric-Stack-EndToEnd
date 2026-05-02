@@ -27,6 +27,10 @@ def process_data(spark):
     # Define the schema of the incoming JSON from OpenWeatherMap
     weather_schema = StructType([
         StructField("name", StringType(), True), # City name
+        StructField("coord", StructType([
+            StructField("lat", DoubleType(), True),
+            StructField("lon", DoubleType(), True)
+        ]), True),
         StructField("main", StructType([
             StructField("temp", DoubleType(), True),
             StructField("humidity", IntegerType(), True),
@@ -58,6 +62,8 @@ def process_data(spark):
     # Flatten the struct and array fields into a flat table structure
     transformed_df = parsed_df.select(
         col("name").alias("city"),
+        col("coord.lat").alias("latitude"),
+        col("coord.lon").alias("longitude"),
         col("main.temp").alias("temperature"),
         col("main.humidity").alias("humidity"),
         col("main.pressure").alias("pressure"),
