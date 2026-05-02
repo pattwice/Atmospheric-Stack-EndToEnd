@@ -75,7 +75,7 @@ services:
     volumes:
       - ./orchestration:/opt/dagster/app
     working_dir: /opt/dagster/app
-    command: bash -c "pip install -r requirements.txt && dagster dev -h 0.0.0.0 -p 3000"
+    command: bash -c "pip install -r requirements.txt && dagster dev -w workspace.yaml -h 0.0.0.0 -p 3000"
     ports:
       - "3000:3000" # Dagster UI
     environment:
