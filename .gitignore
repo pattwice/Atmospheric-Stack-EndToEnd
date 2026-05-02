@@ -42,6 +42,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # IDEs
 .idea/
 .vscode/
