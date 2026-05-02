@@ -1,9 +1,93 @@
-version: '3.8'
-
 services:
-  # Placeholder for Kafka, Spark, Postgres, Dagster, ElysiaJS, React
-  # Services will be added in Phase 2
+  # 1. PostgreSQL (Data Warehouse)
+  postgres:
+    image: postgres:15
+    container_name: weather_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: weather_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - weather_net
+
+  # 2. Zookeeper (Required for Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.2
+    container_name: weather_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - weather_net
+
+  # 3. Apache Kafka (Streaming Buffer)
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: weather_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - weather_net
+
+  # 4. Apache Spark Master Node
+  spark-master:
+    image: bde2020/spark-master:3.2.1-hadoop3.2
+    container_name: weather_spark_master
+    ports:
+      - "8080:8080" # Spark Web UI
+      - "7077:7077" # Spark Master port
+    networks:
+      - weather_net
+
+  # 5. Apache Spark Worker Node
+  spark-worker:
+    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    container_name: weather_spark_worker
+    environment:
+      - "SPARK_MASTER=spark://spark-master:7077"
+    ports:
+      - "8081:8081" # Worker Web UI
+    depends_on:
+      - spark-master
+    networks:
+      - weather_net
+
+  # 6. Dagster (Orchestration)
+  dagster:
+    image: python:3.10-slim
+    container_name: weather_dagster
+    volumes:
+      - ./orchestration:/opt/dagster/app
+    working_dir: /opt/dagster/app
+    command: bash -c "pip install -r requirements.txt && dagster dev -h 0.0.0.0 -p 3000"
+    ports:
+      - "3000:3000" # Dagster UI
+    environment:
+      - DAGSTER_HOME=/opt/dagster/app
+    networks:
+      - weather_net
+    depends_on:
+      - postgres
 
 networks:
   weather_net:
     driver: bridge
+
+volumes:
+  postgres_data:
