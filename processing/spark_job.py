@@ -18,7 +18,6 @@ def create_spark_session():
     """
     return SparkSession.builder \
         .appName("WeatherDataProcessor") \
-        .config("spark.master", "local[*]") \
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.1,org.postgresql:postgresql:42.5.4") \
         .getOrCreate()
 
