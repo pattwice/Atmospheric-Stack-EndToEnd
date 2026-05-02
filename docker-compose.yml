@@ -85,6 +85,23 @@ services:
     depends_on:
       - postgres
 
+  # 7. Backend API (ElysiaJS / Bun)
+  backend:
+    build: ./backend
+    container_name: weather_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=admin
+      - DB_PASSWORD=admin_password
+      - DB_NAME=weather_db
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    networks:
+      - weather_net
+
 networks:
   weather_net:
     driver: bridge
