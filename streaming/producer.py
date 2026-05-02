@@ -2,6 +2,7 @@ import os
 import json
 import time
 import requests
+import sys
 from confluent_kafka import Producer
 from dotenv import load_dotenv
 
@@ -17,14 +18,17 @@ CITY = "London"
 URL = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}"
 
 # Kafka Configuration
-# We connect to localhost:29092 because we exposed this port in our docker-compose for host machine access
-KAFKA_BROKER = "localhost:29092"
+KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:29092")
 TOPIC_NAME = "weather_raw"
 
-# Delivery callback to verify if the message was sent successfully
+# Track delivery errors so the script can fail properly
+delivery_error = False
+
 def delivery_report(err, msg):
+    global delivery_error
     if err is not None:
         print(f"Message delivery failed: {err}")
+        delivery_error = True
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
@@ -40,8 +44,10 @@ def fetch_weather_data():
 
 def main():
     # Initialize the Kafka Producer
-    # The producer needs to know where the broker is located
-    conf = {'bootstrap.servers': KAFKA_BROKER}
+    conf = {
+        'bootstrap.servers': KAFKA_BROKER,
+        'message.timeout.ms': 10000 # 10 seconds timeout to fail fast if broker is unreachable
+    }
     producer = Producer(conf)
 
     print("Starting Weather Data Producer (Batch run)...")
@@ -59,8 +65,14 @@ def main():
         producer.poll(0)
         
     # Flush ensures all messages are sent before the script exits
-    producer.flush()
-    print("Producer finished.")
+    # It returns the number of messages still in queue
+    remaining = producer.flush(15) # Wait up to 15 seconds to flush
+    
+    if remaining > 0 or delivery_error:
+        print("Producer failed to deliver one or more messages.")
+        sys.exit(1)
+        
+    print("Producer finished successfully.")
 
 if __name__ == "__main__":
     main()

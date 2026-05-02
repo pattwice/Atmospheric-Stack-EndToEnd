@@ -82,6 +82,7 @@ services:
       - "3000:3000" # Dagster UI
     environment:
       - DAGSTER_HOME=/opt/dagster/orchestration
+      - KAFKA_BROKER=kafka:9092
     networks:
       - weather_net
     depends_on:
