@@ -73,13 +73,15 @@ services:
     image: python:3.10-slim
     container_name: weather_dagster
     volumes:
-      - ./orchestration:/opt/dagster/app
-    working_dir: /opt/dagster/app
+      - ./:/opt/dagster
+    working_dir: /opt/dagster/orchestration
+    env_file:
+      - .env
     command: bash -c "pip install -r requirements.txt && dagster dev -w workspace.yaml -h 0.0.0.0 -p 3000"
     ports:
       - "3000:3000" # Dagster UI
     environment:
-      - DAGSTER_HOME=/opt/dagster/app
+      - DAGSTER_HOME=/opt/dagster/orchestration
     networks:
       - weather_net
     depends_on:
