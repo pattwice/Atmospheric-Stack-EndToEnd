@@ -10,7 +10,9 @@ load_dotenv()
 
 # OpenWeatherMap API Configuration
 # Get your free API key at https://openweathermap.org/
-API_KEY = os.getenv("OPENWEATHER_API_KEY", "your_api_key_here")
+API_KEY = os.getenv("OPENWEATHER_API_KEY")
+if not API_KEY or API_KEY == "your_real_key_here":
+    raise ValueError("OPENWEATHER_API_KEY is missing or invalid in .env")
 CITY = "London" 
 URL = f"https://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}"
 
