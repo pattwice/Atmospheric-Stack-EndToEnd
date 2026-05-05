@@ -15,7 +15,22 @@ API_KEY = os.getenv("OPENWEATHER_API_KEY")
 if not API_KEY or API_KEY == "your_real_key_here":
     raise ValueError("OPENWEATHER_API_KEY is missing or invalid in .env")
 
-CITIES = ['Bangkok', 'London', 'New York', 'Tokyo', 'Dubai', 'Reykjavik', 'Sydney', 'Sao Paulo']
+CITIES = [
+    # Americas (20%)
+    'New York', 'Los Angeles', 'Chicago', 'Toronto', 'Mexico City',
+    'Sao Paulo', 'Buenos Aires', 'Lima', 'Bogota', 'Havana',
+    # Europe & Africa (30%)
+    'London', 'Paris', 'Berlin', 'Madrid', 'Rome',
+    'Moscow', 'Istanbul', 'Cairo', 'Lagos', 'Nairobi',
+    'Cape Town', 'Stockholm', 'Warsaw', 'Athens', 'Casablanca',
+    # Asia & Oceania (30%)
+    'Tokyo', 'Bangkok', 'Beijing', 'Mumbai', 'Dubai',
+    'Singapore', 'Seoul', 'Sydney', 'Jakarta', 'Manila',
+    'Kuala Lumpur', 'Ho Chi Minh City', 'Taipei', 'Auckland', 'Osaka',
+    # Extreme Locations (20%)
+    'Reykjavik', 'Yakutsk', 'Murmansk', 'Norilsk', 'Kuwait City',
+    'Djibouti', 'Alice Springs', 'Ulaanbaatar', 'Lhasa', 'Riyadh',
+]
 
 # Kafka Configuration
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "localhost:29092")
