@@ -61,3 +61,10 @@ yarn-error.log*
 
 # Mac
 .DS_Store
+
+# AI
+.claude
+.antigravity
+.gemini
+AGENTS.md
+SKILLS.md
