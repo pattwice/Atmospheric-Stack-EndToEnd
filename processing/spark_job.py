@@ -86,7 +86,7 @@ def process_data(spark):
     #   - weather_current: latest reading per city (overwrite)
     #   - weather_summary: pre-aggregated stats per city
     def write_batch(batch_df, batch_id):
-        if batch_df.isEmpty():
+        if len(batch_df.head(1)) == 0:
             return
         
         # Cache the batch since we use it multiple times
