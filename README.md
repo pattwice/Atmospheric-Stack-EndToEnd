@@ -118,3 +118,9 @@ docker-compose up -d
 | **Spark Master UI** | [http://localhost:8080](http://localhost:8080) |
 | **Spark Worker UI** | [http://localhost:8081](http://localhost:8081) |
 | **PostgreSQL** | `localhost:5432` |
+
+## Screenshot
+
+<img width="1920" height="945" alt="media_df209d8a-401d-4cd0-83ab-b1e2450dd824_1778842455093" src="https://github.com/user-attachments/assets/ec6f4455-e680-46b4-8169-768bb9c40291" />
+<img width="1920" height="945" alt="media_df209d8a-401d-4cd0-83ab-b1e2450dd824_1778842523564" src="https://github.com/user-attachments/assets/561974b9-2b23-4c7f-8ec7-217778513311" />
+
