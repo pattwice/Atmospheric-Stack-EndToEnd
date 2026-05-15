@@ -7,18 +7,24 @@ A robust, end-to-end data engineering pipeline and monitoring dashboard that ing
 The project follows a modern ELT (Extract, Load, Transform) pattern:
 
 1.  **Ingestion**: A Python producer (orchestrated by **Dagster**) fetches data from the OpenWeatherMap API and streams it into **Apache Kafka**.
-2.  **Processing**: **Apache Spark Structured Streaming** consumes the raw JSON from Kafka, flattens the schema, extracts coordinates, and performs real-time transformations.
-3.  **Storage**: The processed data is sinked into a **PostgreSQL** data warehouse.
-4.  **API**: An **ElysiaJS (Bun)** backend provides high-performance endpoints for latest data, historical logs, and aggregated insights.
-5.  **Visualization**: A **React (Vite)** dashboard features a dark-mode **Leaflet** map, **Recharts** analytics, and a searchable ingestion history.
+2.  **Processing**: **Apache Spark Structured Streaming** consumes the raw JSON from Kafka, flattens the schema, and writes to **three PostgreSQL tables** in each micro-batch:
+    - `weather_analytics` — Append-only historical log.
+    - `weather_current` — Latest reading per city (upsert).
+    - `weather_summary` — Pre-aggregated stats (max/min temp, avg humidity, record count).
+3.  **Storage**: The processed data lives in **PostgreSQL**, with pre-aggregated tables to minimize query load.
+4.  **API**: An **ElysiaJS (Bun)** backend provides endpoints for latest data, historical logs, aggregated insights, and global summary stats.
+5.  **Visualization**: A **React (Vite)** dashboard features a dark-mode **Leaflet** map with **marker clustering**, **Recharts** analytics, auto-refresh, and a searchable ingestion history.
 
 ## 🚀 Key Features
 
-*   **Global Monitoring**: Tracking weather across multiple continents (Bangkok, London, New York, Tokyo, etc.).
-*   **Premium Dashboard**: Glassmorphism UI with a minimal "Dark Matter" map and black ocean styling.
-*   **Real-Time Analytics**: Insights bar chart comparing temperature extremes across cities.
+*   **50-City Global Monitoring**: Tracking weather across Americas, Europe, Africa, Asia, Oceania, and extreme climate locations.
+*   **Live Stats Bar**: Top ribbon showing global extremes — 🔥 Hottest, ❄️ Coldest, 💧 Most Humid cities in real time.
+*   **Marker Clustering**: Professional Leaflet MarkerCluster groups for clean zoom-out behavior on the dark map.
+*   **Auto-Refresh**: 30-second polling with manual refresh button and pulsing green/red live indicator.
+*   **Pre-Aggregated Analytics**: Spark writes to dedicated summary tables to reduce database load.
+*   **Temperature Extremes Chart**: Top 10 hottest cities bar chart powered by Recharts.
 *   **Searchable History**: Full tabular view of ingested records with city-based filtering.
-*   **Full Orchestration**: Integrated Dagster environment for monitoring asset health and execution logs.
+*   **Full Orchestration**: Dagster scheduling (every 5 min) for continuous data ingestion.
 
 ## 🛠️ Tech Stack
 
@@ -29,7 +35,7 @@ The project follows a modern ELT (Extract, Load, Transform) pattern:
 | **Stream Processing** | Apache Spark (Structured Streaming) |
 | **Database** | PostgreSQL 15 |
 | **Backend API** | Bun + ElysiaJS |
-| **Frontend** | React 18 + Vite + Leaflet + Recharts |
+| **Frontend** | React 18 + Vite + Leaflet + MarkerCluster + Recharts |
 | **Infrastructure** | Docker Compose |
 
 ## 📁 Project Structure
@@ -61,8 +67,17 @@ docker-compose up -d
 ### 4. Trigger the Pipeline
 1.  Open **Dagster UI** (Port 3000).
 2.  Navigate to **Assets**.
-3.  Click **Materialize All** to fetch the latest weather data for all cities.
-4.  The Spark job (running in the background) will automatically detect the Kafka messages and populate the database.
+3.  Click **Materialize All** to fetch weather data for all 50 cities.
+4.  The Spark job (running in the background) will automatically detect the Kafka messages and populate three PostgreSQL tables.
+
+## 📡 API Endpoints
+
+| Endpoint | Description |
+| :--- | :--- |
+| `GET /api/weather/latest` | Latest reading per city (from `weather_current`) |
+| `GET /api/weather/history?city=X` | Historical feed with optional city filter |
+| `GET /api/weather/insights` | Pre-aggregated stats per city (from `weather_summary`) |
+| `GET /api/weather/summary` | Global extremes: hottest, coldest, most humid, total records |
 
 ## 🔗 Port Mapping
 
