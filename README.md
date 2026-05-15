@@ -6,6 +6,35 @@ A robust, end-to-end data engineering pipeline and monitoring dashboard that ing
 
 The project follows a modern ELT (Extract, Load, Transform) pattern:
 
+```mermaid
+graph TD
+    subgraph "Ingestion Layer"
+        API[OpenWeatherMap API] -->|JSON| PROD[Python Producer]
+        DAG[Dagster Orchestrator] -->|Triggers| PROD
+        PROD -->|Stream| KAFKA[(Apache Kafka)]
+    end
+
+    subgraph "Processing Layer"
+        KAFKA -->|Consume| SPARK[Spark Structured Streaming]
+        SPARK -->|Batch Write| DB[(PostgreSQL)]
+    end
+
+    subgraph "Data Model (PostgreSQL)"
+        DB --> T1[weather_analytics<br/><i>Historical Log</i>]
+        DB --> T2[weather_current<br/><i>Latest per City</i>]
+        DB --> T3[weather_summary<br/><i>Pre-aggregated Stats</i>]
+    end
+
+    subgraph "Delivery Layer"
+        T1 & T2 & T3 --> BACK[ElysiaJS API]
+        BACK --> FRONT[React Dashboard]
+    end
+
+    style KAFKA fill:#f9f,stroke:#333,stroke-width:2px
+    style DB fill:#00f,stroke:#fff,stroke-width:2px,color:#fff
+    style SPARK fill:#f90,stroke:#333,stroke-width:2px
+```
+
 1.  **Ingestion**: A Python producer (orchestrated by **Dagster**) fetches data from the OpenWeatherMap API and streams it into **Apache Kafka**.
 2.  **Processing**: **Apache Spark Structured Streaming** consumes the raw JSON from Kafka, flattens the schema, and writes to **three PostgreSQL tables** in each micro-batch:
     - `weather_analytics` — Append-only historical log.
